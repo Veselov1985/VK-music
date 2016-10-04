@@ -1,8 +1,12 @@
 $(function () {
 
+ var id;
+ var $offset=0;
+ var $count=50;
+ var lostdata;
    $(".showafter").hide();
 
-var id;
+
     
     
 
@@ -40,12 +44,12 @@ var id;
             }
         });
 
-
-
-          VK.Api.call('audio.get', {user_ids: id,count:1000}, function (data) {
+         
+        
+          VK.Api.call('audio.get', {user_ids: id,count:$count}, function (data) {
           
             if (data.response) {
-                var audioHTML="<div class='audio_cont'>";
+                var audioHTML="<div class='audio_cont activeblock'>";
                 for(var i=0;i<data.response.length;i++) {
                       audioHTML +="<div class='num col-sm-1'>"+(i+1)+".</div>";
                     audioHTML +="<div class='artist col-sm-4'>"+data.response[i].artist+"-"+data.response[i].title+"</div>";
@@ -54,13 +58,14 @@ var id;
                 }
 
                audioHTML+="</div>";
-
+               $offset+= $count;
+              
+          
              
                $('#content_vk .row').html(audioHTML);
                
-                 $(".showafter").slideDown(2000);
-              
-               
+                $(".showafter").slideDown(2000);
+                
               
             }else {
 
@@ -86,7 +91,111 @@ var id;
 
 
 
+     $( '.pager' ).on( 'click', 'a', function( event ) {
+      var that=this;
+    pagination(that,event);
+ 
+});
 
+
+function pagination(that,e) {
+e.preventDefault();
+
+ if($(that).attr('id')=='next') {
+    if(lostdata && ($('div.activeblock').index()+1)==$('.audio_cont').size()) {     
+     return;
+    };
+
+     if(lostdata && ($('div.activeblock').index()+1)!=$('.audio_cont').size()) {
+
+
+     $('div.activeblock').removeClass('activeblock').hide().next().addClass('activeblock').show();
+     $('.previous').removeClass('disabled');
+      
+      if(($('div.activeblock').index()+1)==$('.audio_cont').size()) {
+
+
+
+         $('.next').addClass('disabled');
+            return;
+
+      }
+
+      return;
+
+     };
+
+  
+
+
+        VK.Api.call('audio.get', {user_ids: id,offset:$offset,count:$count}, function (data) {
+             console.log(data);
+            if (data.response) {
+
+              if(data.response.length==0 ) {
+               lostdata =true;
+              $('.next').addClass('disabled');
+               return;
+            }
+                var audioHTML="<div class='audio_cont'>";
+                for(var i=0;i<data.response.length;i++) {
+                      audioHTML +="<div class='num col-sm-1'>"+(i+1)+".</div>";
+                    audioHTML +="<div class='artist col-sm-4'>"+data.response[i].artist+"-"+data.response[i].title+"</div>";
+                    audioHTML +="<div class='music col-sm-6'><audio src="+data.response[i].url+" controls preload='metadata'></audio></div><div class='col-sm-1'><a href='"+data.response[i].url+"' download='"+data.response[i].artist+"-"+data.response[i].title+".mp3'><i class='fa fa-file-audio-o  fa-2x'></i></a></div><div class='clearfix'></div>"
+
+                }
+
+               audioHTML+="</div>";
+              
+             
+               $('#content_vk .row').append(audioHTML);
+             
+               $('.previous').removeClass('disabled');
+               
+              
+               $offset+= $count;
+               console.log($('div.activeblock'));
+               $('div.activeblock').removeClass('activeblock').hide().next().addClass('activeblock').show();
+            
+            } else {
+                /* Пользователь нажал кнопку Отмена в окне авторизации */
+
+                $('#acces').attr('disabled',false);
+                alert("you need to confirm your account ");
+                 document.location.reload();
+            }
+        },65564);
+
+    
+
+
+ } else if ($(that).attr('id')=='prev') {
+
+ if( $('div.activeblock').index()==0) {
+  
+
+  return;
+
+};
+
+
+
+$('div.activeblock').removeClass('activeblock').hide().prev().addClass('activeblock').show();
+
+if( $('div.activeblock').index()==0) {
+   $('.previous').addClass('disabled');
+return;
+
+};
+
+
+$('.next').removeClass('disabled');
+    
+
+ }
+
+
+}
 
 
 
@@ -105,8 +214,6 @@ var id;
 
         
       });
-
-
 
 
 
@@ -133,3 +240,8 @@ var id;
 
 
 })
+
+
+
+
+
